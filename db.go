@@ -3,6 +3,7 @@ package nap
 import (
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -14,6 +15,15 @@ import (
 type DB struct {
 	pdbs  []*sql.DB // Physical databases
 	count uint64    // Monotonically incrementing counter on each query
+}
+
+// Wrap wrapping origin *sql.DB connects
+// For example, a mocked connect for tests.
+func Wrap(db ...*sql.DB) (*DB, error) {
+	if len(db) == 0 {
+		return nil, errors.New("nap: no *sql.DB for wrapping")
+	}
+	return &DB{pdbs: db}, nil
 }
 
 // Open concurrently opens each underlying physical db.

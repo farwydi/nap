@@ -1,6 +1,7 @@
 package nap
 
 import (
+	"database/sql"
 	"testing"
 	"testing/quick"
 
@@ -36,6 +37,27 @@ func TestClose(t *testing.T) {
 
 	if err = db.Ping(); err.Error() != "sql: database is closed" {
 		t.Errorf("Physical dbs were not closed correctly. Got: %s", err)
+	}
+}
+
+func TestWrap(t *testing.T) {
+	db, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	wdb, err := Wrap(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := wdb.Ping(); err != nil {
+		t.Error(err)
+	}
+
+	if want, got := 1, len(wdb.pdbs); want != got {
+		t.Errorf("Unexpected number of physical dbs. Got: %d, Want: %d", got, want)
 	}
 }
 
