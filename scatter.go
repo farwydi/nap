@@ -1,16 +1,14 @@
 package nap
 
-func scatter(n int, fn func(i int) error) error {
+func scatter(n int, fn func(i int) error) (err error) {
 	errors := make(chan error, n)
 
-	var i int
-	for i = 0; i < n; i++ {
+	for i := 0; i < n; i++ {
 		go func(i int) { errors <- fn(i) }(i)
 	}
 
-	var err, innerErr error
-	for i = 0; i < cap(errors); i++ {
-		if innerErr = <-errors; innerErr != nil {
+	for i := 0; i < n; i++ {
+		if innerErr := <-errors; innerErr != nil {
 			err = innerErr
 		}
 	}
