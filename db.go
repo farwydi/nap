@@ -54,19 +54,19 @@ func (db *DB) Close() error {
 
 // Driver returns the physical database's underlying driver.
 func (db *DB) Driver() driver.Driver {
-	return db.pdbs[0].Driver()
+	return db.Master().Driver()
 }
 
 // Begin starts a transaction on the master. The isolation level is dependent on the driver.
 func (db *DB) Begin() (*sql.Tx, error) {
-	return db.pdbs[0].Begin()
+	return db.Master().Begin()
 }
 
 // Exec executes a query without returning any rows.
 // The args are for any placeholder parameters in the query.
 // Exec uses the master as the underlying physical db.
 func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return db.pdbs[0].Exec(query, args...)
+	return db.Master().Exec(query, args...)
 }
 
 // Ping verifies if a connection to each physical database is still alive,
@@ -98,7 +98,7 @@ func (db *DB) Prepare(query string) (*Stmt, error) {
 // The args are for any placeholder parameters in the query.
 // Query uses a slave as the physical db.
 func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return db.pdbs[db.slave(len(db.pdbs))].Query(query, args...)
+	return db.Slave().Query(query, args...)
 }
 
 // QueryRow executes a query that is expected to return at most one row.
@@ -106,7 +106,7 @@ func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
 // Errors are deferred until Row's Scan method is called.
 // QueryRow uses a slave as the physical db.
 func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
-	return db.pdbs[db.slave(len(db.pdbs))].QueryRow(query, args...)
+	return db.Slave().QueryRow(query, args...)
 }
 
 // SetMaxIdleConns sets the maximum number of connections in the idle
@@ -141,14 +141,14 @@ func (db *DB) SetConnMaxLifetime(d time.Duration) {
 	}
 }
 
-// Slave returns one of the physical databases which is a slave
-func (db *DB) Slave() *sql.DB {
-	return db.pdbs[db.slave(len(db.pdbs))]
-}
-
 // Master returns the master physical database
 func (db *DB) Master() *sql.DB {
 	return db.pdbs[0]
+}
+
+// Slave returns one of the physical databases which is a slave
+func (db *DB) Slave() *sql.DB {
+	return db.pdbs[db.slave(len(db.pdbs))]
 }
 
 func (db *DB) slave(n int) int {
