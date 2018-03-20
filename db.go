@@ -79,7 +79,7 @@ func (db *DB) Ping() error {
 
 // Prepare creates a prepared statement for later queries or executions
 // on each physical database, concurrently.
-func (db *DB) Prepare(query string) (Stmt, error) {
+func (db *DB) Prepare(query string) (*Stmt, error) {
 	stmts := make([]*sql.Stmt, len(db.pdbs))
 
 	err := scatter(len(db.pdbs), func(i int) (err error) {
@@ -91,7 +91,7 @@ func (db *DB) Prepare(query string) (Stmt, error) {
 		return nil, err
 	}
 
-	return &stmt{db: db, stmts: stmts}, nil
+	return &Stmt{db: db, stmts: stmts}, nil
 }
 
 // Query executes a query that returns rows, typically a SELECT.
