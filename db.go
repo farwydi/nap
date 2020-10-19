@@ -217,3 +217,7 @@ func (db *DB) slave(n int) int {
 	}
 	return int(1 + (atomic.AddUint64(&db.count, 1) % uint64(n-1)))
 }
+
+func (db *DB) Databases() []*sql.DB {
+	return db.pdbs
+}
