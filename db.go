@@ -30,12 +30,17 @@ func Wrap(db ...*sql.DB) (*DB, error) {
 // Open concurrently opens each underlying physical db.
 // dataSourceNames must be a semi-comma separated list of DSNs with the first
 // one being used as the master and the rest as slaves.
-func Open(driverName, dataSourceNames string) (*DB, error) {
+func Open(driverName, dataSourceNames string, wrap func(db *sql.DB) (*sql.DB, error)) (*DB, error) {
 	conns := strings.Split(dataSourceNames, ";")
 	db := &DB{pdbs: make([]*sql.DB, len(conns))}
 
 	err := scatter(len(db.pdbs), func(i int) (err error) {
-		db.pdbs[i], err = sql.Open(driverName, conns[i])
+		rawDB, err := sql.Open(driverName, conns[i])
+		if err != nil {
+			return err
+		}
+		db.pdbs[i], err = wrap(rawDB)
+
 		return err
 	})
 
